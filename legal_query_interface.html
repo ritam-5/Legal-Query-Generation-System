@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Query System - IPC Database</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #1f2937; 
+            line-height: 1.6; 
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Header */
+        .header { text-align: center; margin-bottom: 3rem; }
+        .logo { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem; }
+        .logo i { 
+            font-size: 3.5rem; 
+            color: #60a5fa; 
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header h1 { 
+            font-size: 2.5rem; 
+            color: #ffffff; 
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+        }
+        .subtitle { 
+            font-size: 1.1rem; 
+            color: #cbd5e1; 
+            font-weight: 300;
+        }
+
+        /* Search Section */
+        .search-section { 
+            background: rgba(255, 255, 255, 0.98); 
+            border-radius: 16px; 
+            padding: 2.5rem; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 
+                        0 0 0 1px rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+        }
+        .disclaimer-banner { 
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); 
+            color: #92400e; 
+            padding: 1rem 1.5rem; 
+            border-radius: 10px; 
+            margin-bottom: 1.5rem; 
+            border-left: 4px solid #f59e0b; 
+            font-size: 0.95rem;
+        }
+        
+        .search-box { display: flex; flex-direction: column; gap: 1rem; position: relative; }
+        .search-icon { position: absolute; left: 1.2rem; top: 1.2rem; color: #64748b; font-size: 1.1rem; }
+        
+        #queryInput { 
+            width: 100%; 
+            padding: 1.2rem 1.2rem 1.2rem 3rem; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px; 
+            font-size: 1rem; 
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+        #queryInput:focus { 
+            outline: none; 
+            border-color: #3b82f6; 
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        
+        .input-footer { display: flex; justify-content: space-between; align-items: center; }
+        .char-counter { font-size: 0.85rem; color: #64748b; font-weight: 500; }
+        .char-counter.warning { color: #f59e0b; }
+        .char-counter.error { color: #ef4444; }
+        
+        .input-actions { display: flex; gap: 0.5rem; }
+        .icon-btn { 
+            background: #f1f5f9; 
+            border: 1px solid #e2e8f0; 
+            padding: 0.6rem 0.8rem; 
+            border-radius: 8px; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #475569;
+        }
+        .icon-btn:hover { background: #e2e8f0; color: #3b82f6; }
+        .icon-btn.recording { background: #fee2e2; border-color: #fecaca; color: #ef4444; }
+        
+        .search-btn { 
+            padding: 1rem 2.5rem; 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 1rem; 
+            font-weight: 600; 
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+        }
+        .search-btn:hover { 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .example-queries { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.6rem; }
+        .example-label { font-size: 0.9rem; color: #64748b; font-weight: 600; }
+        .example-chip { 
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9); 
+            border: 1px solid #cbd5e1; 
+            padding: 0.6rem 1.2rem; 
+            border-radius: 20px; 
+            font-size: 0.85rem; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #475569;
+        }
+        .example-chip:hover { 
+            border-color: #3b82f6; 
+            color: #3b82f6; 
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            transform: translateY(-1px);
+        }
+
+        /* Loading */
+        .loading-spinner { text-align: center; padding: 3rem; display: none; }
+        .loading-spinner.active { display: block; }
+        .loading-spinner p { color: #cbd5e1; font-weight: 500; font-size: 1.1rem; }
+        .spinner { 
+            width: 50px; 
+            height: 50px; 
+            border: 4px solid rgba(59, 130, 246, 0.2); 
+            border-top-color: #3b82f6; 
+            border-radius: 50%; 
+            margin: 0 auto 1rem; 
+            animation: spin 0.8s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Results */
+        .results-section { display: none; }
+        .results-section.active { display: block; }
+        .results-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        .results-header h2 { font-size: 1.5rem; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; }
+        .results-header i { color: #60a5fa; }
+        .result-count { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb); 
+            color: white; 
+            padding: 0.6rem 1.2rem; 
+            border-radius: 20px; 
+            font-size: 0.9rem; 
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .filter-bar { 
+            background: rgba(255, 255, 255, 0.98); 
+            padding: 1.5rem; 
+            border-radius: 12px; 
+            margin-bottom: 1.5rem; 
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.1);
+        }
+        .filter-group { display: flex; gap: 0.5rem; align-items: center; }
+        .filter-group label { font-size: 0.9rem; color: #475569; font-weight: 600; }
+        .filter-select { 
+            padding: 0.5rem 1rem; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 8px; 
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #334155;
+        }
+        .filter-select:focus { outline: none; border-color: #3b82f6; }
+        .filter-select:hover { border-color: #60a5fa; }
+        .icon-btn-large { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb); 
+            color: white; 
+            border: none; 
+            padding: 0.6rem 1.2rem; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600;
+            margin-left: auto;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease;
+        }
+        .icon-btn-large:hover { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
+        }
+
+        .result-card { 
+            background: rgba(255, 255, 255, 0.98); 
+            border-radius: 12px; 
+            padding: 2rem; 
+            margin-bottom: 1.5rem; 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            transition: all 0.3s ease;
+        }
+        .result-card:hover { 
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+            transform: translateY(-4px);
+            border-color: #3b82f6;
+        }
+        
+        .result-header { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 1rem; 
+            padding-bottom: 1rem; 
+            border-bottom: 2px solid #e2e8f0; 
+        }
+        .section-number { 
+            font-size: 1.2rem; 
+            font-weight: 700; 
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .relevance-badge { 
+            padding: 0.4rem 0.9rem; 
+            border-radius: 20px; 
+            font-size: 0.85rem; 
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .relevance-high { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+        .relevance-medium { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+        .relevance-low { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #475569; }
+        
+        .result-text { color: #334155; line-height: 1.7; font-size: 0.95rem; }
+        .result-text.collapsed { max-height: 100px; overflow: hidden; }
+        
+        .card-actions { 
+            display: flex; 
+            gap: 0.6rem; 
+            margin-top: 1rem; 
+            padding-top: 1rem; 
+            border-top: 1px solid #e2e8f0; 
+        }
+        .action-btn { 
+            padding: 0.5rem 1rem; 
+            border: 1px solid #e2e8f0; 
+            background: #f8fafc; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .action-btn:hover { 
+            background: #eff6ff; 
+            color: #3b82f6; 
+            border-color: #3b82f6;
+        }
+        .expand-btn { 
+            margin-left: auto; 
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe); 
+            color: #1e40af;
+            border-color: #93c5fd;
+            font-weight: 600;
+        }
+
+        /* Toast */
+        .toast-notification { 
+            position: fixed; 
+            bottom: 2rem; 
+            right: 2rem; 
+            background: #1e293b; 
+            color: white; 
+            padding: 1rem 1.5rem; 
+            border-radius: 10px; 
+            display: none; 
+            gap: 0.7rem; 
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+        .toast-notification.show { display: flex; }
+        .toast-notification.success { background: linear-gradient(135deg, #065f46, #047857); }
+        .toast-notification.error { background: linear-gradient(135deg, #991b1b, #b91c1c); }
+
+        /* Footer */
+        .footer { 
+            text-align: center; 
+            margin-top: 3rem; 
+            padding-top: 2rem; 
+            border-top: 1px solid rgba(255, 255, 255, 0.1); 
+            color: #94a3b8; 
+        }
+        .footer-links { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; }
+        .footer-links a { 
+            color: #60a5fa; 
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .footer-links a:hover { color: #3b82f6; }
+
+        /* Modal */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.7); 
+            z-index: 1000; 
+            justify-content: center; 
+            align-items: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 2rem; 
+            max-width: 600px; 
+            width: 90%; 
+            max-height: 80vh; 
+            overflow-y: auto;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 1.5rem; 
+            padding-bottom: 1rem; 
+            border-bottom: 2px solid #e2e8f0; 
+        }
+        .modal-header h2 { color: #1e293b; font-size: 1.5rem; }
+        .modal-header i { color: #3b82f6; }
+        .modal-close { 
+            background: none; 
+            border: none; 
+            font-size: 2rem; 
+            color: #94a3b8; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .modal-close:hover { color: #ef4444; }
+        .modal-body { line-height: 1.7; color: #475569; }
+        .modal-body h3 { color: #1e293b; margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-balance-scale"></i>
+                <h1>Legal Query System</h1>
+            </div>
+            <p class="subtitle">Search Indian Penal Code Sections ⚖️ 📚</p>
+        </header>
+
+        <main class="main-content">
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <textarea id="queryInput" placeholder="Describe your legal situation in detail... What happened? When? Who was involved? What are the circumstances?" rows="5" maxlength="1000"></textarea>
+                    <div class="input-footer">
+                        <div class="char-counter">
+                            <span id="charCount">0</span>/1000
+                        </div>
+                        <div class="input-actions">
+                            <button id="clearBtn" class="icon-btn" title="Clear text">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button id="voiceBtn" class="icon-btn" title="Voice input">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button id="searchBtn" class="search-btn">
+                        <span class="btn-text">Search Legal Database</span>
+                        <i class="fas fa-arrow-right btn-icon"></i>
+                    </button>
+                </div>
+
+                <!-- Example Queries -->
+                <div class="example-queries">
+                    <span class="example-label">📌 Quick searches:</span>
+                    <button class="example-chip" data-query="Someone stole my mobile phone from my pocket in a crowded market">🔒 Theft/Pickpocketing</button>
+                    <button class="example-chip" data-query="A person physically attacked me and caused injury during an argument">⚠️ Physical Assault</button>
+                    <button class="example-chip" data-query="Someone forged my signature on a document to withdraw money from my bank account">📝 Forgery & Fraud</button>
+                    <button class="example-chip" data-query="A person threatened to harm me and my family if I don't pay money">🚨 Criminal Intimidation</button>
+                </div>
+            </div>
+
+            <div id="loadingSpinner" class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Analyzing legal database...</p>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+
+            <div id="resultsSection" class="results-section">
+                <div class="results-header">
+                    <h2><i class="fas fa-gavel"></i> 📋 Matching IPC Sections</h2>
+                    <div class="results-meta">
+                        <span id="resultCount" class="result-count"></span>
+                        <span id="searchTime" class="search-time"></span>
+                    </div>
+                </div>
+                
+                <!-- Filter & Sort Bar -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label><i class="fas fa-filter"></i> Filter by:</label>
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="all">All Categories</option>
+                            <option value="theft">Theft & Property</option>
+                            <option value="assault">Assault & Violence</option>
+                            <option value="fraud">Fraud & Forgery</option>
+                            <option value="threat">Threat & Intimidation</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-sort"></i> Sort by:</label>
+                        <select id="sortFilter" class="filter-select">
+                            <option value="relevance">Relevance</option>
+                            <option value="section-asc">Section (A-Z)</option>
+                            <option value="section-desc">Section (Z-A)</option>
+                        </select>
+                    </div>
+                    <button id="exportBtn" class="icon-btn-large" title="Export results">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+
+                <div id="resultsContainer" class="results-container"></div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="#" id="helpBtn"><i class="fas fa-question-circle"></i> Help</a>
+                <a href="#" id="feedbackBtn"><i class="fas fa-comment-alt"></i> Feedback</a>
+                <a href="#" id="privacyBtn"><i class="fas fa-lock"></i> Privacy Policy</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Action completed</span>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-question-circle"></i> How to Use</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>💡 Tips for Better Results:</h3>
+                <ul>
+                    <li>📝 Describe the incident in detail (who, what, when, where, why)</li>
+                    <li>🎯 Use specific terms like "theft", "assault", "fraud" when applicable</li>
+                    <li>📸 Mention any evidence, witnesses, or damages</li>
+                    <li>✅ Be as specific as possible about the circumstances</li>
+                </ul>
+                <h3>⚙️ Features:</h3>
+                <ul>
+                    <li><strong>🎤 Voice Input:</strong> Click the microphone icon to speak your query</li>
+                    <li><strong>⚡ Quick Searches:</strong> Use example chips for common scenarios</li>
+                    <li><strong>📥 Export:</strong> Download results as PDF or text file</li>
+                    <li><strong>📋 Copy:</strong> Easily copy section text to clipboard</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        let recognition = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Character counter
+            $('queryInput').addEventListener('input', function() {
+                const count = this.value.length;
+                const counter = $('charCount');
+                counter.textContent = count;
+                counter.parentElement.classList.toggle('warning', count > 800);
+                counter.parentElement.classList.toggle('error', count >= 1000);
+            });
+
+            // Clear button
+            $('clearBtn').addEventListener('click', () => {
+                $('queryInput').value = '';
+                $('charCount').textContent = '0';
+                $('queryInput').focus();
+            });
+
+            // Voice input
+            $('voiceBtn').addEventListener('click', () => {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    showToast('Voice input not supported in your browser', 'error');
+                    return;
+                }
+
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-IN';
+                recognition.continuous = false;
+
+                recognition.onstart = () => {
+                    $('voiceBtn').classList.add('recording');
+                    showToast('Listening... Speak now', 'success');
+                };
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    $('queryInput').value = transcript;
+                    $('queryInput').dispatchEvent(new Event('input'));
+                };
+
+                recognition.onerror = () => {
+                    showToast('Could not recognize speech', 'error');
+                    $('voiceBtn').classList.remove('recording');
+                };
+
+                recognition.onend = () => {
+                    $('voiceBtn').classList.remove('recording');
+                };
+
+                recognition.start();
+            });
+
+            // Example queries
+            document.querySelectorAll('.example-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    $('queryInput').value = this.dataset.query;
+                    $('queryInput').dispatchEvent(new Event('input'));
+                    $('queryInput').focus();
+                });
+            });
+
+            // Search button
+            $('searchBtn').addEventListener('click', () => {
+                const query = $('queryInput').value.trim();
+                if (!query) {
+                    showToast('Please describe your legal situation', 'error');
+                    return;
+                }
+                if (query.split(' ').length < 3) {
+                    showToast('Please provide a detailed description (at least 3 words)', 'error');
+                    return;
+                }
+                
+                // Perform API search
+                performSearch(query);
+            });
+
+            // Enter key to search
+            $('queryInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    $('searchBtn').click();
+                }
+            });
+
+            // Modal handlers
+            $('helpBtn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                $('helpModal').classList.add('show');
+            });
+
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.classList.remove('show');
+                    });
+                });
+            });
+
+            // Close modal on outside click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+            });
+        });
+
+        // API Integration - Perform search
+        async function performSearch(query) {
+            const startTime = Date.now();
+            $('loadingSpinner').classList.add('active');
+            $('resultsSection').classList.remove('active');
+
+            try {
+                // Call FastAPI backend
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        n_results: 5
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Search failed');
+                }
+
+                const data = await response.json();
+                
+                $('loadingSpinner').classList.remove('active');
+                $('resultsSection').classList.add('active');
+                $('resultCount').textContent = `${data.total_results} Results Found`;
+                $('searchTime').textContent = `Found in ${data.search_time}s`;
+
+                // Display results
+                let html = '';
+                data.results.forEach(result => {
+                    html += createResultCard({
+                        section: result.section,
+                        relevance: result.relevance,
+                        text: result.text
+                    });
+                });
+
+                $('resultsContainer').innerHTML = html;
+                attachActionHandlers();
+                $('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (error) {
+                console.error('Search error:', error);
+                $('loadingSpinner').classList.remove('active');
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = $('toast');
+            const toastMsg = $('toastMessage');
+            const icon = toast.querySelector('i');
+
+            toastMsg.textContent = message;
+            toast.className = `toast-notification ${type} show`;
+            
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Create result card HTML
+        function createResultCard(result) {
+            const relevanceClass = `relevance-${result.relevance}`;
+            const relevanceText = result.relevance.charAt(0).toUpperCase() + result.relevance.slice(1);
+            
+            return `
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="section-number">
+                            <i class="fas fa-bookmark"></i>
+                            ${result.section}
+                        </div>
+                        <div class="${relevanceClass} relevance-badge">
+                            <i class="fas fa-star"></i>
+                            ${relevanceText} Match
+                        </div>
+                    </div>
+                    <div class="result-text collapsed">
+                        ${result.text}
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn copy-btn" data-text="${result.text}">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <button class="action-btn share-btn">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                        <button class="action-btn bookmark-btn">
+                            <i class="far fa-bookmark"></i> Bookmark
+                        </button>
+                        <button class="action-btn expand-btn">
+                            <i class="fas fa-chevron-down"></i> Expand
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Attach handlers to action buttons
+        function attachActionHandlers() {
+            // Copy buttons
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const text = this.dataset.text;
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast('Copied to clipboard!', 'success');
+                    });
+                });
+            });
+
+            // Share buttons
+            document.querySelectorAll('.share-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showToast('Share functionality coming soon!', 'success');
+                });
+            });
+
+            // Bookmark buttons
+            document.querySelectorAll('.bookmark-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    if (icon.classList.contains('far')) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                        showToast('Added to bookmarks', 'success');
+                    } else {
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                        showToast('Removed from bookmarks', 'success');
+                    }
+                });
+            });
+
+            // Expand buttons
+            document.querySelectorAll('.expand-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.result-card');
+                    const text = card.querySelector('.result-text');
+                    const icon = this.querySelector('i');
+                    
+                    if (text.classList.contains('collapsed')) {
+                        text.classList.remove('collapsed');
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                        this.innerHTML = '<i class="fas fa-chevron-up"></i> Collapse';
+                    } else {
+                        text.classList.add('collapsed');
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                        this.innerHTML = '<i class="fas fa-chevron-down"></i> Expand';
+                    }
+                });
+            });
+        }
+
+        // Export functionality
+        $('exportBtn')?.addEventListener('click', () => {
+            showToast('Exporting results...', 'success');
+            // Export logic here
+        });
+    </script>
+</body>
+</html>

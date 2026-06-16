@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+sentence-transformers
+chromadb
+pandas
+nltk
+beautifulsoup4
+
